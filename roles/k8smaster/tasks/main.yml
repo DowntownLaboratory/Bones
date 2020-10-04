@@ -138,7 +138,7 @@
         - name: install openfaas
           command: arkade install openfaas
         - name: expose openfaas
-          command: arkade install openfaas-ingress --domain {{ domain_name }} --email {{ domain_email }}
+          command: arkade install openfaas-ingress --domain {{ faas_subdomain }}.{{ domain_name }} --email {{ domain_email }}
         - name: get password
           command: kubectl get secret -n openfaas basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode
           register: openfaas_pass
@@ -146,9 +146,9 @@
           debug:
             var: openfaas_pass.stdout
     - name: Install NATS-Connector (Function Triggers)
-      block:
-        - name: install nats-connector
-          command: helm install ncon /root/infrastructure/nfs-connector-1.0.0.tgz
+      command: helm install ncon /root/infrastructure/nfs-connector-1.0.0.tgz
+    - name: Install Cron-Connector (Function Triggers)
+      command: arkade install cron-connector
   when: kubeadm_init is changed
 # After the GameBox revival, we can add kubernetes nodes with labels for architecture.
 # This way we can use helm to target amd64 architectures using nodeSelectors and we can remove all of our custom helm packages.

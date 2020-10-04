@@ -43,13 +43,6 @@
                 - API_KEY="{{ cloud_flare_api_key }}"
                 - ZONE="{{ domain_name }}"
                 - SUBDOMAIN="{{ api_subdomain }}"
-            git-domain-ddns:
-              image: oznu/cloudflare-ddns:latest
-              restart: always
-              environment:
-                - API_KEY="{{ cloud_flare_api_key }}"
-                - ZONE="{{ domain_name }}"
-                - SUBDOMAIN="{{ git_subdomain }}"
             info-domain-ddns:
               image: oznu/cloudflare-ddns:latest
               restart: always
