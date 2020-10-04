@@ -90,7 +90,10 @@
       block:
         - name: install nfs
           command: |
-            helm install nfs /root/infrastructure/nfs-client-provisioner-1.0.0.tgz \
+            helm install nfs {{ infrastructure_folder}}/nfs-client-provisioner-1.0.0.tgz \
+            --set namespace={{ nfs_kubernetes_namespace }} \
+            --set name={{ nfs_kubernetes_name }} \
+            --set storageName={{ nfs_kubernetes_storage_name }} \
             --set defaultStorgeClass=true \
             --set nfsPath={{ nfs_server_general_directory }} \
             --set nfsIP={{ hostvars[groups['nfsserver'][0]]['ansible_default_ipv4'].address }}
@@ -122,7 +125,12 @@
         - name: Create monitoring namespace
           command: kubectl create namespace {{ prometheus_namespace }}
         - name: Install prometheus
-          command: helm install prometheus /root/infrastructure/prometheus-1.0.0.tgz --set port={{ prometheus_port }} --set namespace={{ prometheus_namespace }}
+          command: |
+            helm install prometheus /root/infrastructure/prometheus-1.0.0.tgz \
+              --set port={{ prometheus_port }} \
+              --set namespace={{ prometheus_namespace }} \
+              --set domainName={{ domain_name }} \
+              --set monitoringPort={{prometheus_monitoring_port }}
     - name: install OpenFaaS (Functions)
       block:
         - name: get faas cli
