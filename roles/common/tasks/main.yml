@@ -1,0 +1,29 @@
+---
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+  when: not inventory_hostname is match('(\d{1,3}\.){3}\d{1,3}')
+  register: hostname
+  tags: hostname
+- name: Ensure hostname is in /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    regexp: "^{{ ansible_default_ipv4.address }}.+$"
+    line: "{{ ansible_default_ipv4.address }} {{ ansible_fqdn }} {{ ansible_hostname }}"
+  tags: hostname
+- name: Update the /etc/hosts file with all master nodes.
+  lineinfile:
+    dest: /etc/hosts
+    regexp: "^{{ hostvars[item]['ansible_default_ipv4'].address }}.+$"
+    line: "{{ hostvars[item]['ansible_default_ipv4'].address }}\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
+    state: present
+    backup: yes
+  with_items: "{{ groups['all'] }}"
+- name: 'Set timezone to {{ time_zone}} '
+  timezone:
+    name: '{{ time_zone}}'
+  register: timezone
+- name: Check python-apt dependency
+  apt:
+    name: ['python-apt']
+    state: present

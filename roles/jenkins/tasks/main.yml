@@ -1,0 +1,73 @@
+---
+- name: Install Java JDK
+  apt:
+    name: ['openjdk-8-jdk={{ java_jdk_version }}']
+    state: present
+    update_cache: yes
+  register: installed_java
+- name: Lock Java JDK version to {{ java_jdk_version }}
+  command: "/usr/bin/apt-mark hold openjdk-8-jdk"
+  when: installed_java is changed
+- name: Get package repo
+  apt_key:
+    url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+    state: present
+  register: got_package_repo
+- name: Add package repo
+  command: sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+  when: got_package_repo.changed
+- name: Install Jenkins
+  apt:
+    name: ['jenkins={{ jenkins_version }}']
+    state: present
+    update_cache: yes
+  register: installed_jenkins
+- name: Configure Jenkins
+  block:
+    - name: Lock Jenkins version to {{ jenkins_version }}
+      command: "/usr/bin/apt-mark hold jenkins"
+    - name: Grant Jenkins permissions to Docker
+      command: usermod -a -G docker jenkins
+    - name: Create Docker plugins file for Jenkins
+      file: 
+        path: /var/lib/jenkins/.docker/cli-plugins
+        state: directory
+    - name: Copy existing Docker plugins for Jenkins
+      copy: 
+        remote_src: true
+        dest: /var/lib/jenkins/.docker/
+        src: "{{ docker_plugins_path }}"
+        mode: '0755'
+    - name: Apply permissions to docker plugins for jenkins
+      file:
+        path: /var/lib/jenkins/
+        mode: '0755'
+        state: directory
+        recurse: yes
+        group: jenkins
+        owner: jenkins
+    - name: Start Jenkins
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+    - name: Create certificate key path
+      file:
+        path: '{{ ssh_key_path }}'
+        state: directory
+    - name: Create SSH Key
+      command: 'ssh-keygen -t rsa -C "jenkins" -m PEM -P "" -f {{ ssh_key_path }}/.ssh/id_rsa'
+    - name: Deploy key to hosts
+      command: 'ssh-copy-id -i {{ ssh_key_path }}/.ssh/id_rsa {{ server_root_user }}@{{ hostvars[item]["ansible_default_ipv4"].address }}'
+      with_items: '{{ groups["k8smaster"] }}'
+    - name: Display SSH Key information
+      debug: var=item
+      with_file:
+        - '{{ ssh_key_path }}/.ssh/id_rsa.pub'
+        - '{{ ssh_key_path }}/.ssh/id_rsa'
+    - name: Get Jenkins first time setup admin key
+      command: 'cat {{ jenkins_first_time_pass_path }}'
+      register: jenkins_admin_key
+    - debug:
+        var: jenkins_admin_key.stdout
+  when: installed_jenkins is changed

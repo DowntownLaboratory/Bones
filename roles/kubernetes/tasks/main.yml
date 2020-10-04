@@ -1,0 +1,55 @@
+---
+- name: use arptables-legacy
+  alternatives:
+    name: arptables
+    path: /usr/sbin/arptables-legacy
+  failed_when: false
+- name: use ebtables-legacy
+  alternatives:
+    name: ebtables
+    path: /usr/sbin/ebtables-legacy
+  failed_when: false
+- name: use iptables-legacy
+  alternatives:
+    name: iptables
+    path: /usr/sbin/iptables-legacy
+  failed_when: false
+- name: use ip6tables-legacy
+  alternatives:
+    name: ip6tables
+    path: /usr/sbin/ip6tables-legacy
+  failed_when: false
+- name: Install apt-transport-https
+  apt:
+    name: apt-transport-https
+    state: latest
+- name: Add Google Cloud Repo Key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+- name: Add Kubernetes to Available apt Sources
+  template:
+    src: kubernetes.list
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    owner: root
+    group: root
+    mode: 0644
+- name: apt-get update
+  apt:
+    update_cache: yes
+    autoclean: yes
+    autoremove: yes
+- name: Install k8s {{ kubernetes_package_version }}
+  apt:
+    name: "['kubelet={{ kubernetes_package_version }}', 'kubeadm={{ kubernetes_package_version }}','kubectl={{ kubernetes_package_version }}']"
+    state: present
+    force: yes
+    update_cache: yes
+  register: kubernetes_installed
+- name: Lock Kubernetes version to {{ kubernetes_package_version }}
+  command: "/usr/bin/apt-mark hold {{ item }}"
+  when: kubernetes_installed is changed
+  loop:
+  - kubelet
+  - kubeadm
+  - kubectl

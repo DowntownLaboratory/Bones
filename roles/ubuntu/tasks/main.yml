@@ -1,0 +1,25 @@
+---
+- name: Kill everything running under user ubuntu
+  shell: killall -u ubuntu
+  ignore_errors: true
+- name: Remove the user 'ubuntu'
+  user:
+    name: ubuntu
+    state: absent
+    remove: yes
+- name: Copy a new sshd_config file into place, backing up the original
+  copy:
+    src: sshd_config
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+- name: Update and upgrade packages to their latest version
+  apt:
+    cache_valid_time: 86400
+    update_cache: 'yes'
+    autoclean: 'yes'
+    autoremove: 'yes'
+    upgrade: 'yes'
+  register: updated_packages

@@ -1,0 +1,40 @@
+# Initialize
+- hosts: all
+  become: true
+  roles:
+    - ubuntu
+    - common
+    - raspberrypi
+    - nfsclient
+    - docker
+
+- hosts: all
+  tasks:
+    - name: Reboot
+      reboot:
+        connect_timeout: 10
+        reboot_timeout: 300
+      when: updated_packages.changed or cmdline.changed or nobtcmd.changed or swap.changed or timezone.changed or hostname.changed
+
+# PLONK Stack
+- hosts: nfsserver
+  roles:
+    - nfsserver
+    - ddns
+
+- hosts: k8smaster
+  roles:
+    - buildkit
+    - kubernetes
+    - k8smaster
+
+- hosts: k8sworker
+  roles:
+    - kubernetes
+    - k8sworker
+
+- hosts: jenkins
+  roles:
+    - buildkit
+    - jenkins
+    

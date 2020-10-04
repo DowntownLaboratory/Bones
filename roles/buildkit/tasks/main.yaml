@@ -1,0 +1,40 @@
+# Dependencies
+##### Docker
+---
+- name: Install Buildx (Docker Experimental Builder)
+  block:
+    - name: build the experimental build kit image
+      command: docker build --platform=local -o . git://github.com/docker/buildx
+      environment:
+        DOCKER_BUILDKIT: 1
+    - name: make plugins directory
+      file:
+        path: '{{ docker_plugins_path }}'
+        state: directory
+    - name: set plugin
+      copy:
+        remote_src: true
+        dest: '{{ docker_plugins_path }}/docker-buildx'
+        src: buildx
+        mode: '0755'
+  when: (docker_installed != "") and (docker_installed is changed)
+- name: Install OpenFaaS-CLI (Tools)
+  command: curl -sSL https://cli.openfaas.com | sh
+- name: Install Make (Tools)
+  apt:
+    name: make
+    state: present
+    update_cache: true
+- name: Install Arkade (Package Manager)
+  command: curl -SLsf https://dl.get-arkade.dev/ | sudo sh
+- name: Install Helm (Package Manager)
+  block:
+    - name: get helm
+      command: arkade get helm
+    - name: add package repositories
+      block:
+      - command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+      - command: helm repo add bitnami https://charts.bitnami.com/bitnami
+      - command: helm repo add jetstack https://charts.jetstack.io
+    - name: update repositories
+      command: helm repo update

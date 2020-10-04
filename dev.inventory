@@ -1,0 +1,11 @@
+[raspberrypi]
+rb01 ansible_host=192.168.0.101
+rb11 ansible_host=192.168.0.111
+
+[jenkins]
+rb11
+rb01
+
+[new]
+rb11
+rb01

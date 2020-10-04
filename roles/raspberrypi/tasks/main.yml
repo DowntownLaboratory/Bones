@@ -1,0 +1,27 @@
+---
+- name: Enabling cgroup options at boot for cmdline
+  failed_when: false
+  lineinfile:
+    backrefs: yes
+    line: '\g<1> cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1\g<2>'
+    path: '/boot/firmware/cmdline.txt'
+    regexp: '^(.*\bconsole=tty1\b).*( root=LABEL\b.*)$'
+  register: cmdline
+- name: Enabling cgroup options at boot for nobtcmd
+  failed_when: false
+  lineinfile:
+    backrefs: yes
+    line: '\g<1> cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1\g<2>'
+    path: '/boot/firmware/nobtcmd.txt'
+    regexp: '^(.*\bconsole=tty1\b).*( root=LABEL\b.*)$'
+  register: nobtcmd
+- name: Disable swap for current session
+  command: swapoff -a
+  become: true
+- name: Disable swap permanently, persist reboots
+  replace:
+    path: /etc/fstab
+    regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
+    replace: '#\1\2\3swap\4'
+    backup: yes
+  register: swap

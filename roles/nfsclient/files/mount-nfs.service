@@ -1,0 +1,11 @@
+[Unit]
+Description=Calls mount -a on start up which automatically adds nfs partitions.
+
+[Service]
+ExecStartPre=/bin/sh -c 'until ping -c1 google.com; do sleep 5; done;'
+ExecStart=sudo mount -a
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

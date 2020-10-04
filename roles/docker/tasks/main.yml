@@ -1,0 +1,33 @@
+---
+- name: Add docker-ce key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+- name: Add docker-ce repo
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu eoan stable
+    state: present
+    filename: kubernetes
+- name: Install docker
+  apt:
+    name: ['docker-ce={{ docker_ce_version }}', 'docker-ce-cli={{ docker_ce_version }}', 'docker-compose={{ docker_compose_version }}', 'containerd.io={{ containerd_version }}']
+    state: present
+    update_cache: yes
+  register: docker_installed
+- name: Set Docker daemon configuration
+  template:
+    dest: /etc/docker/daemon.json
+    src: docker.daemon.json
+  notify: restart Docker
+- name: Lock docker version to "{{ docker_ce_version }}"
+  command: "/usr/bin/apt-mark hold {{ item }}"
+  when: docker_installed.changed
+  loop:
+  - docker-ce
+  - docker-ce-cli
+- name: Lock containered version to "{{ containerd_version }}"
+  command: "/usr/bin/apt-mark hold containerd.io"
+  when: docker_installed.changed
+- name: Lock containered version to "{{ docker_compose_version }}"
+  command: "/usr/bin/apt-mark hold docker-compose"
+  when: docker_installed.changed

@@ -1,0 +1,7 @@
+---
+- hosts: all
+  order: inventory
+  tasks:
+    - name: shutdown
+      command: shutdown -P -h now
+      ignore_errors: true

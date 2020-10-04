@@ -1,0 +1,19 @@
+# kubernetes_installed exists in the kubernetes role, 
+# TODO: isolate this file so that it does not use any external variables
+---
+- name: Add Node
+  block: 
+    - name: Reset Kubernetes
+      shell: kubeadm reset -f
+      register: kubeadm_reset
+      when: kubernetes_installed is changed
+    - name: Join Kubernetes Cluster
+      shell: kubeadm join --ignore-preflight-errors=all --token {{ token }} {{ groups['k8smaster'][0] }}:6443 --discovery-token-unsafe-skip-ca-verification
+      when: kubernetes_installed is changed
+    - name: Poke kubelet
+      systemd:
+        name: kubelet
+        state: restarted
+        daemon_reload: yes
+        enabled: yes
+  when: kubernetes_installed is changed
