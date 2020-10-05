@@ -1,0 +1,16 @@
+- hosts: all
+  become: true
+  roles:
+    - ubuntu
+    - common
+    - raspberrypi
+    - nfsclient
+    - docker
+
+- hosts: all
+  tasks:
+    - name: Reboot
+      reboot:
+        connect_timeout: 10
+        reboot_timeout: 300
+      when: updated_packages.changed or cmdline.changed or nobtcmd.changed or swap.changed or timezone.changed or hostname.changed

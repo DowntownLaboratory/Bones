@@ -2,9 +2,10 @@
 - name: Check Nodes
   command: kubectl get nodes
   register: kube_nodes
+  ignore_errors: yes
 - name: Reset Kubernetes Master
   command: kubeadm reset -f
-  when: "('{{ kubernetes_version }}' not in kube_nodes['stdout']) and ('master' not in kube_nodes['stdout'])"
+  when: "('The connection to the server' in kube_nodes['stderr'])"
   register: kubeadm_reset
 - name: Initialize Master Node 
   shell: kubeadm init --apiserver-advertise-address={{ ansible_default_ipv4.address }} --token={{ token }} --kubernetes-version={{ kubernetes_version }} --pod-network-cidr={{ podnet }}
@@ -44,111 +45,32 @@
         group: root
         mode: 0755
     - name: copy over all infrastructure files
-      synchronize:
-        src: infrastructure/
-        dest: /root/infrastructure/
-        rsync_opts:
-          - --include=*/
-          - --include=*.*
-    - name: create service file directory
+      copy:
+        src: infrastructure/{{ item }}
+        dest: /root/infrastructure/{{ item }}
+      loop: 
+        - "lets-encrypt-issuer.yaml"
+        - "metallb-config.yaml"
+        - "nats-1.0.1.tgz"
+        - "nats-connector-1.0.0.tgz"
+        - "nfs-client-provisioner-1.0.0.tgz"
+    - name: create services file directory
       file:
-        path: /root/service/
+        path: /root/services/
         state: directory
         owner: root
         group: root
         mode: 0755
-    - name: copy over all service files
-      synchronize:
-        src: service/
-        dest: /root/service/
-        rsync_opts:
-          - --include=*/
-          - --include=*.*
-    - name: install Flannel (Networking)
-      shell: "curl -sSL https://rawgit.com/coreos/flannel/{{ flannel_version }}/Documentation/kube-flannel.yml | kubectl create -f -"
-      args:
-        warn: false
-    - name: install MetalLB (Load Balancing)
-      block:
-        - name: add namespaces
-          command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{metallb_version}}/manifests/namespace.yaml"
-        - name: add services
-          command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{metallb_version}}/manifests/metallb.yaml"
-        - name: add secret
-          command: "kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey='$(openssl rand -base64 128)'"
-        - name: replace load_balancer_ip_start
-          path: /root/infrastructure/metallb-config.yaml
-          regexp: '(load_balancer_ip_start)'
-          replace: "{{ load_balancer_ip_start }}"
-        - name: replace load_balancer_ip_end
-          path: /root/infrastructure/metallb-config.yaml
-          regexp: '(load_balancer_ip_end)'
-          replace: "{{ load_balancer_ip_end }}"
-        - name: apply config 5/5
-          command: kubectl apply -f /root/infrastructure/metallb-config.yaml
-    - name: install NFS Client Provisioner (Storage) 
-      block:
-        - name: install nfs
-          command: |
-            helm install nfs {{ infrastructure_folder}}/nfs-client-provisioner-1.0.0.tgz \
-            --set namespace={{ nfs_kubernetes_namespace }} \
-            --set name={{ nfs_kubernetes_name }} \
-            --set storageName={{ nfs_kubernetes_storage_name }} \
-            --set defaultStorgeClass=true \
-            --set nfsPath={{ nfs_server_general_directory }} \
-            --set nfsIP={{ hostvars[groups['nfsserver'][0]]['ansible_default_ipv4'].address }}
-    - name: install Cert-Manager (Security)
-      block:
-      - name: install package
-        command: arkade install cert-manager
-      - name: replace certificate_email 
-        replace:
-          path: /root/infrastructure/lets-encrypt-issuer.yaml
-          regexp: '(certificate_email)'
-          replace: '{{ certificate_email }}'
-      - name: replace certificate_secret_key_name
-        replace:
-          path: /root/infrastructure/lets-encrypt-issuer.yaml
-          regexp: '(certificate_secret_key_name)'
-          replace: '{{ certificate_secret_key_name }}'
-      - name: replace certificate_issuer_url
-        replace:
-          path: /root/infrastructure/lets-encrypt-issuer.yaml
-          regexp: '(certificate_issuer_url)'
-          replace: '{{ certificate_issuer_url }}'
-      - name: create resources
-        command: kubectl apply - /root/infrastructure/lets-encrypt-issuer.yaml
-    - name: install Ingress Nginx (Networking)
-      command: arkade install ingress-nginx
-    - name: install Prometheus (Monitoring)
-      block: 
-        - name: Create monitoring namespace
-          command: kubectl create namespace {{ prometheus_namespace }}
-        - name: Install prometheus
-          command: |
-            helm install prometheus /root/infrastructure/prometheus-1.0.0.tgz \
-              --set port={{ prometheus_port }} \
-              --set namespace={{ prometheus_namespace }} \
-              --set domainName={{ domain_name }} \
-              --set monitoringPort={{prometheus_monitoring_port }}
-    - name: install OpenFaaS (Functions)
-      block:
-        - name: get faas cli
-          command: arkade get faas-cli
-        - name: install openfaas
-          command: arkade install openfaas
-        - name: expose openfaas
-          command: arkade install openfaas-ingress --domain {{ faas_subdomain }}.{{ domain_name }} --email {{ domain_email }}
-        - name: get password
-          command: kubectl get secret -n openfaas basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode
-          register: openfaas_pass
-        - name: display pass
-          debug:
-            var: openfaas_pass.stdout
-    - name: Install NATS-Connector (Function Triggers)
-      command: helm install ncon /root/infrastructure/nfs-connector-1.0.0.tgz
-    - name: Install Cron-Connector (Function Triggers)
-      command: arkade install cron-connector
+    - name: copy over all services files
+      copy:
+        src: services/{{ item }}
+        dest: /root/services/{{ item }}
+      loop: 
+        - "mariadb-1.0.0.tgz"
+        - "postgres-1.0.0.tgz"
+        - "nfs-client-provisioner-test-1.0.0.tgz"
+        - "redis-1.0.0.tgz"
+        - "prometheus-1.0.0.tgz"
   when: kubeadm_init is changed
 # After the GameBox revival, we can add kubernetes nodes with labels for architecture.
 # This way we can use helm to target amd64 architectures using nodeSelectors and we can remove all of our custom helm packages.

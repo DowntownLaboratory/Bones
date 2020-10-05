@@ -1,0 +1,107 @@
+- name: Configure Kubernetes Services
+  block:
+    - name: install Flannel (Networking)
+      shell: "curl -sSL https://rawgit.com/coreos/flannel/{{ flannel_version }}/Documentation/kube-flannel.yml | kubectl create -f -"
+      args:
+        warn: false
+    - name: install MetalLB (Load Balancing)
+      block:
+        - name: add namespaces
+          command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/namespace.yaml"
+        - name: add services
+          command: 'kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/metallb.yaml'
+        - name: add secret
+          command: "kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey='$(openssl rand -base64 128)'"
+        - name: replace load_balancer_ip_start
+          replace:
+            path: /root/infrastructure/metallb-config.yaml
+            regexp: '(load_balancer_ip_start)'
+            replace: "{{ load_balancer_ip_start }}"
+        - name: replace load_balancer_ip_end
+          replace:
+            path: /root/infrastructure/metallb-config.yaml
+            regexp: '(load_balancer_ip_end)'
+            replace: "{{ load_balancer_ip_end }}"
+        - name: apply config
+          command: kubectl apply -f /root/infrastructure/metallb-config.yaml
+        - name: Pause for {{ service_pause }} minutes while services build
+          pause:
+            minutes: {{ service_pause }}
+    - name: install NFS Client Provisioner (Storage) 
+      block:
+        - name: install nfs
+          command: |
+            helm install nfs {{ infrastructure_folder}}/nfs-client-provisioner-1.0.0.tgz \
+            --set namespace={{ nfs_kubernetes_namespace }} \
+            --set name={{ nfs_kubernetes_name }} \
+            --set storageName={{ nfs_kubernetes_storage_name }} \
+            --set defaultStorgeClass=true \
+            --set nfsPath={{ nfs_server_general_directory }} \
+            --set nfsIP={{ hostvars[groups['nfsserver'][0]]['ansible_default_ipv4'].address }}
+    - name: install Cert-Manager (Security)
+      block:
+      - name: install package
+        command: arkade install cert-manager
+      - name: replace certificate_email 
+        replace:
+          path: /root/infrastructure/lets-encrypt-issuer.yaml
+          regexp: '(certificate_email)'
+          replace: '{{ certificate_email }}'
+      - name: replace certificate_secret_key_name
+        replace:
+          path: /root/infrastructure/lets-encrypt-issuer.yaml
+          regexp: '(certificate_secret_key_name)'
+          replace: '{{ certificate_secret_key_name }}'
+      - name: replace certificate_issuer_url
+        replace:
+          path: /root/infrastructure/lets-encrypt-issuer.yaml
+          regexp: '(certificate_issuer_url)'
+          replace: '{{ certificate_issuer_url }}'
+      - name: create resources
+        command: kubectl apply -f /root/infrastructure/lets-encrypt-issuer.yaml
+    - name: install Ingress Nginx (Networking)
+      command: arkade install ingress-nginx'
+    - name: Pause for {{ service_pause }} minutes while services build
+      pause:
+        minutes: {{ service_pause }}
+    - name: install Prometheus (Monitoring)
+      block: 
+        - name: Create monitoring namespace
+          command: kubectl create namespace {{ prometheus_namespace }}
+        - name: Install prometheus
+          command: |
+            helm install prometheus /root/infrastructure/prometheus-1.0.0.tgz \
+              --set port={{ prometheus_port }} \
+              --set namespace={{ prometheus_namespace }} \
+              --set domainName={{ domain_name }} \
+              --set monitoringPort={{ prometheus_monitoring_port }}
+              --set issuer={{ certificate_issuer_name }}.{{ certificate_issuer_namepace }}
+    - name: Pause for {{ service_pause }} minutes while services build
+      pause:
+        minutes: {{ service_pause }}
+    - name: install OpenFaaS (Functions)
+      block:
+        - name: get faas cli
+          command: arkade get faas-cli
+        - name: install openfaas
+          command: arkade install openfaas
+        - name: Pause for {{ service_pause }} minute while services build
+          pause:
+            minutes: {{ service_pause }}
+        - name: expose openfaas
+          command: arkade install openfaas-ingress --domain {{ faas_subdomain }}.{{ domain_name }} --email {{ domain_email }}
+        - name: Pause for {{ service_pause }} minute while services build
+          pause:
+            minutes: {{ service_pause }}
+        - name: get password
+          shell: kubectl get secret -n openfaas basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode
+          register: openfaas_pass
+        - name: display pass
+          debug:
+            var: openfaas_pass.stdout
+    - name: Install NATS-Connector (Function Triggers)
+      command: helm install ncon /root/infrastructure/nats-connector-1.0.0.tgz
+    - name: Install Cron-Connector (Function Triggers)
+      command: arkade install cron-connector
+  when: kubeadm_init is changed
+  

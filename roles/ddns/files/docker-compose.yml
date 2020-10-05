@@ -1,9 +1,0 @@
-# DEPRECATED, THIS IS ONLY HERE AS AN EXAMPLE
-version: '2'
-services:
-  root-domain-ddns:
-    image: oznu/cloudflare-ddns:latest
-    restart: always
-    environment:
-      - API_KEY=api_key
-      - ZONE=domainname

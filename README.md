@@ -83,7 +83,11 @@ This may fail to ping if you have not setup SSH keys and only configured your Pi
 ## Deploy, Deploy, Deploy
 
 ``` bash
-ansible-playbook cluster.yml
+ansible-playbook setup.yml
+// if the reboots get stuck, 
+//    start over to verify everything went thru fine, 
+// then proceed
+ansible-playbook plonk.yml
 ```
 
 ## Interact with Kubernetes

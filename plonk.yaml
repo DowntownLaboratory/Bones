@@ -1,0 +1,26 @@
+# PLONK Stack
+- hosts: nfsserver
+  roles:
+    - nfsserver
+    - ddns
+
+- hosts: k8smaster
+  roles:
+    - buildkit
+    - kubernetes
+    - k8smaster
+
+- hosts: k8sworker
+  roles:
+    - kubernetes
+    - k8sworker
+
+- hosts: k8smaster
+  roles:
+    - k8sservice
+
+- hosts: jenkins
+  roles:
+    - buildkit
+    - jenkins
+    

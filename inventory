@@ -21,12 +21,17 @@ rb11
 [nfsserver]
 rb14
 
+[nfsclient]
+rb01
+rb02
+rb03
+rb11
+rb12
+
 [k8smaster]
 rb01
 
 [k8sworker]
 rb02
 rb03
-rb11
 rb12
-rb14

@@ -46,6 +46,8 @@
         recurse: yes
         group: jenkins
         owner: jenkins
+    - name: Give Jenkins permissions to docker
+      command: usermod -a -G docker jenkins
     - name: Start Jenkins
       systemd:
         name: jenkins
@@ -61,8 +63,8 @@
       command: 'ssh-copy-id -i {{ ssh_key_path }}/.ssh/id_rsa {{ server_root_user }}@{{ hostvars[item]["ansible_default_ipv4"].address }}'
       with_items: '{{ groups["k8smaster"] }}'
     - name: Display SSH Key information
-      debug: var=item
-      with_file:
+      debug: var={{item}}
+      loop:
         - '{{ ssh_key_path }}/.ssh/id_rsa.pub'
         - '{{ ssh_key_path }}/.ssh/id_rsa'
     - name: Get Jenkins first time setup admin key

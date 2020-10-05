@@ -1,0 +1,37 @@
+# DEPRECATED, THIS IS ONLY HERE AS AN EXAMPLE
+version: '2'
+services:
+  root-domain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY=ENV_API_KEY
+      - ZONE=ENV_DOMAIN_NAME
+  www-subdomain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY=ENV_API_KEY
+      - ZONE=ENV_DOMAIN_NAME
+      - SUBDOMAIN=www
+  faas-domain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY=ENV_API_KEY
+      - ZONE=ENV_DOMAIN_NAME
+      - SUBDOMAIN=ENV_FAAS_SUBDOMAIN
+  blog-domain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY=ENV_API_KEY
+      - ZONE=ENV_DOMAIN_NAME
+      - SUBDOMAIN=ENV_BLOG_SUBDOMAIN
+  info-domain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY=ENV_API_KEY
+      - ZONE=ENV_DOMAIN_NAME
+      - SUBDOMAIN=ENV_INFO_SUBDOMAIN
