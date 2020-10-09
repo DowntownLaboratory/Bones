@@ -35,7 +35,7 @@
             --set namespace={{ nfs_kubernetes_namespace }} \
             --set name={{ nfs_kubernetes_name }} \
             --set storageName={{ nfs_kubernetes_storage_name }} \
-            --set defaultStorgeClass=true \
+            --set defaultStorageClass=true \
             --set nfsPath={{ nfs_server_general_directory }} \
             --set nfsIP={{ hostvars[groups['nfsserver'][0]]['ansible_default_ipv4'].address }}
     - name: install Cert-Manager (Security)

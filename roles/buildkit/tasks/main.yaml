@@ -28,6 +28,11 @@
     name: make
     state: present
     update_cache: true
+- name: Install Node/NPM (JavaScript)
+  apt:
+    name: ["npm", "nodejs"]
+    state: present
+    update_cache: true
 - name: Install Arkade (Package Manager)
   block:
     - command: curl -SLsf https://dl.get-arkade.dev/ -o arkadecli.sh
