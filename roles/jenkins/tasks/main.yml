@@ -61,7 +61,7 @@
       command: 'ssh-keygen -t rsa -C "jenkins" -m PEM -P "" -f {{ ssh_key_path }}/.ssh/id_rsa'
     - name: Deploy key to hosts
       command: 'ssh-copy-id -i {{ ssh_key_path }}/.ssh/id_rsa {{ server_root_user }}@{{ hostvars[item]["ansible_default_ipv4"].address }}'
-      with_items: '{{ groups["k8smaster"] }}'
+      with_items: '{{ groups["k8smanager"] }}'
     - name: Display SSH Key information
       debug: var={{item}}
       loop:

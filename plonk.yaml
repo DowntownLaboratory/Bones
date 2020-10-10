@@ -1,26 +1,43 @@
-# PLONK Stack
 - hosts: nfsserver
   roles:
     - nfsserver
     - ddns
 
-- hosts: k8smaster
+- hosts: nfsclient
+  become: true
+  roles:
+    - nfsclient
+
+- hosts: k8sworker:k8smanager:k8sassistant
+  roles:
+    - docker
+    - kubernetes
+
+- hosts: k8smanager:k8sassistant
   roles:
     - buildkit
-    - kubernetes
-    - k8smaster
+    - keepalived
+    - haproxy
+
+# there should be one manager
+- hosts: k8smanager
+  roles:
+    - k8smanager
+
+# assistants can become promoted to managers if the manager is offline. assistants are k8s manager backups
+- hosts: k8sassistant
+  roles:
+    - k8sassistant
+    # TODO: migrate jenkins into a k8s service.
+    - jenkins
 
 - hosts: k8sworker
   roles:
-    - kubernetes
     - k8sworker
 
-- hosts: k8smaster
+# we install all the services after the assisstants have joined because request with kubectl 
+# may fail if the haproxy routes the request to an unprepared assistant.
+# we install after all the workers have joined, so that our services can spin up too.
+- hosts: k8smanager
   roles:
     - k8sservice
-
-- hosts: jenkins
-  roles:
-    - buildkit
-    - jenkins
-    

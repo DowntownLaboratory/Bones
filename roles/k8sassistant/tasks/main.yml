@@ -1,0 +1,8 @@
+
+- name: Initialize Assistant
+  block:
+    - name: Reset Kubernetes Assistant
+      command: kubeadm reset -f
+    - name:  run kubeadm join
+      command: "{{ hostvars[groups['k8smanager'][0]]['control_plane_join_command'] }}"
+  when: kubernetes_installed is changed

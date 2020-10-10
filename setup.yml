@@ -1,13 +1,11 @@
-- hosts: all
+- hosts: raspberrypi
   become: true
   roles:
     - ubuntu
     - common
     - raspberrypi
-    - nfsclient
-    - docker
 
-- hosts: all
+- hosts: raspberrypi
   tasks:
     - name: Reboot
       reboot:

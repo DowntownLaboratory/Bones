@@ -6,14 +6,7 @@
     - name: Reset Kubernetes
       shell: kubeadm reset -f
       register: kubeadm_reset
-      when: kubernetes_installed is changed
     - name: Join Kubernetes Cluster
-      shell: kubeadm join --ignore-preflight-errors=all --token {{ token }} {{ groups['k8smaster'][0] }}:6443 --discovery-token-unsafe-skip-ca-verification
-      when: kubernetes_installed is changed
-    - name: Poke kubelet
-      systemd:
-        name: kubelet
-        state: restarted
-        daemon_reload: yes
-        enabled: yes
+      # the commands are registered as a variable for the k8s manager node.
+      shell: "{{ hostvars[groups['k8smanager'][0]]['compute_plane_join_command'] }}" 
   when: kubernetes_installed is changed

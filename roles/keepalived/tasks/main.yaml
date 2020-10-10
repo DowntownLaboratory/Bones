@@ -1,0 +1,79 @@
+- name: Create keepalived directory
+  file:
+    path: /etc/keepalived
+    state: directory
+- name: Copy Keepalived config file
+  copy:
+    src: keepalived.conf
+    dest: /etc/keepalived/keepalived.conf
+    force: no
+  register: keepalived_new
+- name: Replace environment variables for keepalived
+  block:
+    - block:
+      - replace:
+          path: /etc/keepalived/keepalived.conf
+          regexp: '(\${STATE})'
+          replace: "{{ manager_initial_state }}"
+      - replace:
+          path: /etc/keepalived/keepalived.conf
+          regexp: '(\${PRIORITY})'
+          replace: "{{ manager_priority }}" 
+      when: "'k8smanager' in group_names"
+    - block:
+      - replace:
+          path: /etc/keepalived/keepalived.conf
+          regexp: '(\${STATE})'
+          replace: "{{ assistant_initial_state }}"
+      - replace:
+          path: /etc/keepalived/keepalived.conf
+          regexp: '(\${PRIORITY})'
+          replace: "{{ assistant_priority }}"
+      when: "'k8sassistant' in group_names"
+    - replace:
+        path: /etc/keepalived/keepalived.conf
+        regexp: '(\${INTERFACE})'
+        replace: "{{ raspberrypi_network_interface }}"
+    - replace:
+        path: /etc/keepalived/keepalived.conf
+        regexp: '(\${ROUTER_ID})'
+        replace: "{{ router_id }}"
+    - replace:
+        path: /etc/keepalived/keepalived.conf
+        regexp: '(\${AUTH_PASS})'
+        replace: "{{ keepalived_shared_secret }}"
+    - replace:
+        path: /etc/keepalived/keepalived.conf
+        regexp: '(\${APISERVER_VIP})'
+        replace: "{{ virtual_ip }}"
+  when: "keepalived_new is changed"
+- name: Create keepalived healthcheck script
+  copy:
+    src: check_apiserver.sh
+    dest: /etc/keepalived/check_apiserver.sh
+    force: no
+  register: healthcheck_new
+- name: Replace environment variables for keepalived healthcheck script
+  block:
+  - replace:
+      path: /etc/keepalived/check_apiserver.sh
+      regexp: '(\${APISERVER_VIP})'
+      replace: "{{ virtual_ip }}/24"
+  - replace:
+      path: /etc/keepalived/check_apiserver.sh
+      regexp: '(\${APISERVER_DEST_PORT})'
+      replace: "{{ virtual_server_port }}"
+  when: "healthcheck_new is changed"
+- name: Install Keepalived
+  apt:
+    name: "keepalived"
+    state: present 
+    update_cache: yes
+  register: installed_keepalived
+- name: Start Keepalived
+  systemd:
+    daemon_reload: yes
+    name: "keepalived"
+    state: restarted
+    enabled: yes
+  when: "installed_keepalived is changed"

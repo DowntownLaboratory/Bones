@@ -51,5 +51,3 @@
 - name: print disk filesystem info
   debug:
     var: disk_filesystem_info.stdout_lines
-  debug:
-    var: disk_filesystem_info.stdout_lines

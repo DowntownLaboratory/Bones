@@ -6,17 +6,16 @@ rb11 ansible_host=192.168.0.111
 rb12 ansible_host=192.168.0.112
 rb14 ansible_host=192.168.0.114
 
-[new]
+[k8smanager]
 rb01
+
+[k8sassistant]
+rb11
+
+[k8sworker]
 rb02
 rb03
-rb11
 rb12
-rb14
-
-
-[jenkins]
-rb11
 
 [nfsserver]
 rb14
@@ -26,12 +25,4 @@ rb01
 rb02
 rb03
 rb11
-rb12
-
-[k8smaster]
-rb01
-
-[k8sworker]
-rb02
-rb03
 rb12

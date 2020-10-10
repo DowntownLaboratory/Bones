@@ -15,9 +15,9 @@
     update_cache: yes
   register: docker_installed
 - name: Set Docker daemon configuration
-  template:
-    dest: /etc/docker/daemon.json
+  copy:
     src: docker.daemon.json
+    dest: /etc/docker/daemon.json
   notify: restart Docker
 - name: Lock docker version to "{{ docker_ce_version }}"
   command: "/usr/bin/apt-mark hold {{ item }}"
@@ -31,3 +31,5 @@
 - name: Lock containered version to "{{ docker_compose_version }}"
   command: "/usr/bin/apt-mark hold docker-compose"
   when: docker_installed.changed
+- name: Force all notified handlers to run at this point, not waiting for normal sync points
+  meta: flush_handlers

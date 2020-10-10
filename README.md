@@ -4,14 +4,13 @@
 * [**rak8s**](https://github.com/rak8s) is maintained by [Chris Short](https://github.com/chris-short) and a community of open source folks willing to help.
 
 ## Services:
-- automatically deployed: nats.openfaas // message broker.
+- automatically deployed: NONE.
 
 ## Prerequisites
 ### Router Config:
 - StaticIPs for all the devices
 - MetalLB needs 200-220 to expose services
 - Port forward 80 and 443 to the Ingress-Controller's exposed port.
-- Port forward 9090 to NATS
 
 ### Hardware
 
@@ -86,7 +85,7 @@ This may fail to ping if you have not setup SSH keys and only configured your Pi
 ansible-playbook setup.yml
 // if the reboots get stuck, 
 //    start over to verify everything went thru fine, 
-// then proceed
+// then proceed with:
 ansible-playbook plonk.yml
 ```
 
