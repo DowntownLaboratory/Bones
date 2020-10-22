@@ -54,6 +54,6 @@
   roles:
     - role: k8sservice
       tags: [ kubernetes, service ]
-      # P.L.O.N.K. (Prometheus, Linkerd2, OpenFaaS, NATS, Kuberentes)
+    # P.L.O.N.K. (Prometheus, Linkerd2, OpenFaaS, NATS, Kuberentes)
     - role: plonk
       tags: [ kubernetes, plonk ]

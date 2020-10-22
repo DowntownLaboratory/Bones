@@ -2,7 +2,7 @@
 - name: 'reset manager'
   command: kubeadm reset -f
 - name: 'init manager' 
-  shell: kubeadm init --control-plane-endpoint "{{ virtual_ip }}:{{ virtual_port }}" --upload-certs
+  shell: kubeadm init --apiserver-advertise-address={{ virtual_ip }} --control-plane-endpoint "{{ virtual_ip }}:{{ virtual_port }}" --upload-certs
   register: kubeadm_init
   # if we capture the kubeadm_init response as a variable
   # we can select the main kubeadm join command w/ regex:
