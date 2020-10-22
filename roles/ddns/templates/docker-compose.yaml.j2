@@ -1,0 +1,36 @@
+version: '2'
+services:
+  root-domain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY={{ cloud_flare_api_key }}
+      - ZONE={{ domain_name }}
+  www-subdomain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY={{ cloud_flare_api_key }}
+      - ZONE={{ domain_name }}
+      - SUBDOMAIN=www
+  blog-domain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY={{ cloud_flare_api_key }}
+      - ZONE={{ domain_name }}
+      - SUBDOMAIN={{ blog_subdomain }}
+  info-domain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY={{ cloud_flare_api_key }}
+      - ZONE={{ domain_name }}
+      - SUBDOMAIN={{ info_subdomain }}
+  dev-domain-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: always
+    environment:
+      - API_KEY={{ cloud_flare_api_key }}
+      - ZONE={{ domain_name }}
+      - SUBDOMAIN={{ dev_subdomain }}

@@ -1,0 +1,43 @@
+- name: 'create haproxy directory'
+  file:
+    path: /etc/haproxy
+    state: directory
+
+- name: 'create keepalived directory'
+  file:
+    path: /etc/keepalived
+    state: directory
+
+- name: 'add haproxy.cfg template'
+  template: 
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+
+- name: 'add keepalived.cfg template'
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+
+- name: 'add keepalived healthcheck script'
+  template:
+    src: check_apiserver.sh.j2
+    dest: /etc/keepalived/check_apiserver.sh
+
+- name: 'install services'
+  apt:
+    name: ['keepalived', 'haproxy']
+    state: present 
+    update_cache: yes
+
+- name: 'restart keepalived service'
+  systemd:
+    daemon_reload: yes
+    name: "keepalived"
+    state: restarted
+    enabled: yes
+- name: 'restart haproxy service'
+  systemd:
+    daemon_reload: yes
+    name: "haproxy"
+    state: restarted
+    enabled: yes

@@ -1,69 +1,48 @@
 ---
-- name: Configure Manager Node {{ kubernetes_version }}
+- name: 'reset manager'
+  command: kubeadm reset -f
+- name: 'init manager' 
+  shell: kubeadm init --control-plane-endpoint "{{ virtual_ip }}:{{ virtual_port }}" --upload-certs
+  register: kubeadm_init
+  # if we capture the kubeadm_init response as a variable
+  # we can select the main kubeadm join command w/ regex:
+  # (?s)(?<=control-plane node running the following command on each as root:\n\n).+?(?=Please note that)
+  # we can select the worker node kubeadm join command w/ regex:
+  # (?s)(?<=worker nodes by running the following on each as root:\n\n).+?(?=\Z)
+- name: 'set k8s controller node join command'
+  # with all of the escaping the regex variables look kinda ugly but they're escaping "\\n" and new lines or returns.
+  set_fact: control_plane_join_command="{{ kubeadm_init.stdout | regex_replace('(\\\\\\n)', '') | regex_replace('(\\n|\\r)', '') | regex_search('(?s)(?<=control-plane node running the following command on each as root:).+?(?=Please)') }}"
+- name: 'set k8s compute node join command'
+  set_fact: compute_plane_join_command="{{ kubeadm_init.stdout | regex_replace('(\\\\\\n)', '') | regex_replace('(\\n|\\r)', '') | regex_search('(?s)(?<=worker nodes by running the following on each as root:).+?(?=\\Z)') }}"
+- name: 'create kubectl config directory'
+  file:
+    path: ~/.kube/
+    state: directory
+    mode: 0700
+- name: 'enable kubectl'
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: ~/.kube/config
+    mode: 0700
+    remote_src: yes
+    backup: yes
+- name: Install Arkade (Package Manager)
   block:
-    - name: Reset Kubernetes Manager
-      command: kubeadm reset -f
-      register: kubeadm_reset
-    - name: Initialize Primary Manager Controller Node 
-      shell: kubeadm init --control-plane-endpoint "{{ virtual_ip }}:{{ virtual_server_port }}" --upload-certs
-      register: kubeadm_init
-      # if we capture the kubeadm_init response as a variable
-      # we can select the main kubeadm join command w/ regex:
-      # (?s)(?<=control-plane node running the following command on each as root:\n\n).+?(?=Please note that)
-      # we can select the worker node kubeadm join command w/ regex:
-      # (?s)(?<=worker nodes by running the following on each as root:\n\n).+?(?=\Z)
-    - name: Create Fact for K8s Backup Node Join command
-      # with all of the escaping the regex variables look kinda ugly but they're escaping "\\n" and new lines or returns.
-      set_fact: control_plane_join_command="{{ kubeadm_init.stdout | regex_replace('(\\\\\\n)', '') | regex_replace('(\\n|\\r)', '') | regex_search('(?s)(?<=control-plane node running the following command on each as root:).+?(?=Please)') }}"
-    - name: Create Fact for K8s compute node join command
-      set_fact: compute_plane_join_command="{{ kubeadm_init.stdout | regex_replace('(\\\\\\n)', '') | regex_replace('(\\n|\\r)', '') | regex_search('(?s)(?<=worker nodes by running the following on each as root:).+?(?=\\Z)') }}"
-    - name: create Kubernetes config directory
-      file:
-        path: /root/.kube/
-        state: directory
-        owner: root
-        group: root
-        mode: 0755
-    - name: copy admin.conf to config directory
-      copy:
-        src: /etc/kubernetes/admin.conf
-        dest: /root/.kube/config
-        owner: root
-        group: root
-        mode: 0755
-        remote_src: yes
-        backup: yes
-    - name: create infrastructure file directory
-      file:
-        path: /root/infrastructure/
-        state: directory
-        owner: root
-        group: root
-        mode: 0755
-    - name: copy over all infrastructure files
-      copy:
-        src: infrastructure/{{ item }}
-        dest: /root/infrastructure/{{ item }}
-      loop: 
-        - "lets-encrypt-issuer.yaml"
-        - "metallb-config.yaml"
-        - "nfs-client-provisioner-1.0.0.tgz"
-    - name: create services file directory
-      file:
-        path: /root/services/
-        state: directory
-        owner: root
-        group: root
-        mode: 0755
-    - name: copy over all services files
-      copy:
-        src: services/{{ item }}
-        dest: /root/services/{{ item }}
-      loop: 
-        - "mariadb-1.0.0.tgz"
-        - "nats-1.0.0.tgz"
-        - "nfs-client-provisioner-test-1.0.0.tgz"
-        - "postgres-1.0.0.tgz"
-        - "prometheus-1.0.0.tgz"
-        - "redis-1.0.0.tgz"
-  when: kubernetes_installed is changed
+    - name: 'get arkade'
+      command: curl -SLsf https://dl.get-arkade.dev/ -o arkadecli.sh
+    - name: 'install arkade'
+      command: sh arkadecli.sh
+- name: Install Helm (Package Manager)
+  block:
+    - name: 'install helm'
+      command: snap install helm --classic
+    - name: 'add ingress repo'
+      command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    - name: 'add bitnami repo'
+      command: helm repo add bitnami https://charts.bitnami.com/bitnami
+    - name: 'add jetstack repo'
+      command: helm repo add jetstack https://charts.jetstack.io
+    - name: 'add stable repo'
+      command: helm repo add stable https://kubernetes-charts.storage.googleapis.com
+    - name: 'update repo'
+      command: helm repo update

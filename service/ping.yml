@@ -1,6 +1,0 @@
----
-- hosts: raspberrypi
-  order: inventory
-  tasks:
-    - name: test connection
-      ping:

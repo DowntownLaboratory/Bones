@@ -1,105 +1,48 @@
-- name: Configure Kubernetes Services
+- name: Install Weave Works (Container Networking)
+  shell: "kubectl apply -f \"https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')\""
+  args:
+    warn: false
+- name: Install MetalLB (Load Balancing)
   block:
-    - name: install Weave Works CNI (Networking)
-      shell: "kubectl apply -f \"https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')\""
-      args:
-        warn: false
-    - name: install MetalLB (Load Balancing)
-      block:
-        - name: add namespaces
-          command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/namespace.yaml"
-        - name: add services
-          command: 'kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/metallb.yaml'
-        - name: add secret
-          command: "kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey='$(openssl rand -base64 128)'"
-        - name: replace load_balancer_ip_start
-          replace:
-            path: /root/infrastructure/metallb-config.yaml
-            regexp: '(load_balancer_ip_start)'
-            replace: "{{ load_balancer_ip_start }}"
-        - name: replace load_balancer_ip_end
-          replace:
-            path: /root/infrastructure/metallb-config.yaml
-            regexp: '(load_balancer_ip_end)'
-            replace: "{{ load_balancer_ip_end }}"
-        - name: apply config
-          command: kubectl apply -f /root/infrastructure/metallb-config.yaml
-        - name: Pause for {{ service_pause }} minutes while services build
-          pause:
-            minutes: "{{ service_pause }}"
-    - name: install NFS Client Provisioner (Storage) 
-      block:
-        - name: install nfs
-          command: |
-            helm install nfs {{ infrastructure_folder}}/nfs-client-provisioner-1.0.0.tgz \
-            --set namespace={{ nfs_kubernetes_namespace }} \
-            --set name={{ nfs_kubernetes_name }} \
-            --set storageName={{ nfs_kubernetes_storage_name }} \
-            --set defaultStorageClass=true \
-            --set nfsPath={{ nfs_server_general_directory }} \
-            --set nfsIP={{ hostvars[groups['nfsserver'][0]]['ansible_default_ipv4'].address }}
-    - name: install Cert-Manager (Security)
-      block:
-        - name: install cert manager package
-          command: arkade install cert-manager
-        - name: replace certificate_email 
-          replace:
-            path: /root/infrastructure/lets-encrypt-issuer.yaml
-            regexp: '(certificate_email)'
-            replace: '{{ certificate_email }}'
-        - name: replace certificate_secret_key_name
-          replace:
-            path: /root/infrastructure/lets-encrypt-issuer.yaml
-            regexp: '(certificate_secret_key_name)'
-            replace: '{{ certificate_secret_key_name }}'
-        - name: replace certificate_issuer_url
-          replace:
-            path: /root/infrastructure/lets-encrypt-issuer.yaml
-            regexp: '(certificate_issuer_url)'
-            replace: '{{ certificate_issuer_url }}'
-        - name: Pause for {{ service_pause }} minute while services build
-          pause:
-            minutes: "{{ service_pause }}"
-        - name: create certificate-manager resources
-          command: kubectl apply -f /root/infrastructure/lets-encrypt-issuer.yaml
-          # this service reports an error because it doesnt build quickly ennough
-          # instead of ignoring errors we use a service pause to wait for cert-manager to be ready.
-          ignore_errors: no
-    - name: install Ingress Nginx (Networking)
-      command: arkade install ingress-nginx
-    - name: install Prometheus (Monitoring)
-      block: 
-        - name: Create monitoring namespace
-          command: kubectl create namespace {{ prometheus_namespace }}
-        - name: Install prometheus
-          command: |
-            helm install prometheus /root/services/prometheus-1.0.0.tgz \
-              --set port={{ prometheus_port }} \
-              --set namespace={{ prometheus_namespace }} \
-              --set domainName={{ domain_name }} \
-              --set monitoringPort={{ prometheus_monitoring_port }}
-              --set issuer={{ certificate_issuer_name }}.{{ certificate_issuer_namepace }}
-    - name: install OpenFaaS (Functions)
-      block:
-        - name: get faas cli
-          command: arkade get faas-cli
-        - name: install openfaas
-          command: arkade install openfaas
-        - name: Pause for {{ service_pause }} minute while services build
-          pause:
-            minutes: "{{ service_pause }}"
-        - name: expose openfaas
-          command: arkade install openfaas-ingress --domain {{ faas_subdomain }}.{{ domain_name }} --email {{ domain_email }}
-        - name: Pause for {{ service_pause }} minute while services build
-          pause:
-            minutes: "{{ service_pause }}"
-        - name: get password
-          shell: kubectl get secret -n openfaas basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode
-          register: openfaas_pass
-        - name: display pass
-          debug:
-            var: openfaas_pass.stdout
-    - name: Install Cron-Connector (Function Triggers)
-      command: arkade install cron-connector
-  # when: kubeadm_init is changed
-  
+    - name: add metallb namespaces
+      command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/namespace.yaml"
+    - name: add metallb services
+      command: 'kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/metallb.yaml'
+    - name: add metallb secret
+      command: "kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey='$(openssl rand -base64 128)'"
+    - name: copy metallb config
+      template: 
+        src: metallb-config.yaml.j2
+        dest: ./metallb-config.yaml
+    - name: apply metallb config
+      command: kubectl apply -f ./metallb-config.yaml
+    - name: 'pause for {{ service_pause }} seconds(s)'
+      pause:
+        seconds: "{{ service_pause }}"
+- name: Install Ingress-Nginx (Ingress Controller)
+  command: arkade install ingress-nginx
+- name: Install Cert-Manager (TLS)
+  block:
+    - name: install cert manager package
+      command: arkade install cert-manager
+    - name: 'Pause for {{ service_pause }} second(s)'
+      pause:
+        seconds: "{{ service_pause }}"
+    - name: 'copy lets-encrypt-issuer.yaml template'
+      template:
+        src: lets-encrypt-issuer.yaml.j2
+        dest: ./lets-encrypt-issuer.yaml
+    - name: create certificate-manager resources
+      command: kubectl apply -f ./lets-encrypt-issuer.yaml
+      # this service reports an error because it doesnt build quickly ennough
+      # instead of ignoring errors we use a service pause to wait for cert-manager to be ready.
+      ignore_errors: no
+- name: Install NFS Client Provisioner (Volumes Service)
+  command: |
+    helm install nfs stable/nfs-client-provisioner \
+    --set image.repository=quay.io/external_storage/nfs-client-provisioner-arm 
+    --set image.tag={{ nfs_client_provisioner_version }}
+    --set storageClass.name={{ nfs_storage_name }} \
+    --set storageClass.defaultClass=true \
+    --set nfs.path={{ nfs_path }} \
+    --set nfs.server={{ nfs_server }}

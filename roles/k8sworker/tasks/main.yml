@@ -9,4 +9,3 @@
     - name: Join Kubernetes Cluster
       # the commands are registered as a variable for the k8s manager node.
       shell: "{{ hostvars[groups['k8smanager'][0]]['compute_plane_join_command'] }}" 
-  when: kubernetes_installed is changed

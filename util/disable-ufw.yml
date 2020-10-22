@@ -1,0 +1,6 @@
+---
+- hosts: all
+  order: inventory
+  tasks:
+    - name: 'disable ufw'
+      command: ufw disable

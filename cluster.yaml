@@ -1,0 +1,59 @@
+- hosts: all
+  become: true
+  roles:
+    - role: ubuntu
+      tags: [ setup, os ]
+    - role: raspberrypi
+      tags: [ setup, hardware ]
+    - role: common
+      tags: [ setup, shared ]
+    - role: docker
+      tags: [ setup, docker ]
+    - role: kubernetes
+      tags: [ setup, kubernetes ]
+
+- hosts: k8smanager:k8sassistant
+  become: true
+  roles:
+    - role: proxy
+      tags: [ network ]
+
+- hosts: nfsserver
+  become: true
+  roles:
+    - role: ddns
+      vars:
+      tags: [ network ]
+    - role: nfsserver
+      vars:
+      tags: [ storage ]
+
+# there should be one manager
+- hosts: k8smanager
+  become: true
+  roles:
+    - role: k8smanager
+      tags: [ kubernetes, cluster ]
+
+# assistants can become promoted to managers if the manager is offline. assistants are k8s manager backups
+- hosts: k8sassistant
+  become: true
+  roles:
+    - role: k8sassistant
+      tags: [ kubernetes, cluster ]
+
+- hosts: k8sworker
+  become: true
+  roles:
+    - role: k8sworker
+      tags: [ kubernetes, cluster ]
+
+# Install services once all the nodes have joined.
+- hosts: k8smanager
+  become: true
+  roles:
+    - role: k8sservice
+      tags: [ kubernetes, service ]
+      # P.L.O.N.K. (Prometheus, Linkerd2, OpenFaaS, NATS, Kuberentes)
+    - role: plonk
+      tags: [ kubernetes, plonk ]

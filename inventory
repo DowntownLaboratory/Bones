@@ -1,28 +1,19 @@
 [raspberrypi]
-rb01 ansible_host=192.168.0.101
-rb02 ansible_host=192.168.0.102
-rb03 ansible_host=192.168.0.103
-rb11 ansible_host=192.168.0.111
-rb12 ansible_host=192.168.0.112
-rb14 ansible_host=192.168.0.114
+bone1 ansible_host=192.168.0.201
+bone2 ansible_host=192.168.0.202
+bone3 ansible_host=192.168.0.203
+bone4 ansible_host=192.168.0.204
+bone5 ansible_host=192.168.0.205
 
 [k8smanager]
-rb01
+bone1
 
 [k8sassistant]
-rb11
+bone2
 
 [k8sworker]
-rb02
-rb03
-rb12
+bone3
+bone4
 
 [nfsserver]
-rb14
-
-[nfsclient]
-rb01
-rb02
-rb03
-rb11
-rb12
+bone5

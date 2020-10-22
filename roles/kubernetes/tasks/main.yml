@@ -31,8 +31,6 @@
   template:
     src: kubernetes.list
     dest: /etc/apt/sources.list.d/kubernetes.list
-    owner: root
-    group: root
     mode: 0644
 - name: apt-get update
   apt:

@@ -1,43 +1,25 @@
 ---
 - name: install nfs-kernel-server
   apt:
-    name: nfs-kernel-server
+    name: ['nfs-kernel-server', 'nfs-common']
     state: present
     update_cache: true
-  register: nfs_istalled
+  register: nfs_installed
+  
 - name: create default directory
   file:
-    path: "{{ nfs_server_general_directory }}"
+    path: "{{ nfs_path }}"
     owner: nobody
     group: nogroup
     state: directory  
+
 - name: Share default directory
   lineinfile:
     path: /etc/exports
-    line: "{{ nfs_server_general_directory }} {{ hostvars[item]['ansible_default_ipv4'].address }}({{ nfs_server_settings }})"
-  with_items: "{{ groups['nfsclient'] }}"
-  register: shared_default_directory
-- name: share home directory.
-  lineinfile:
-    path: /etc/exports
-    line: '{{ nfs_server_home_directory }} {{ hostvars[item]["ansible_default_ipv4"].address }}({{ nfs_server_settings }})'
-  with_items: '{{ groups["nfsclient"] }}'
-  register: shared_home_directory
+    line: "{{ nfs_path }} {{ local_network }}(rw,sync,no_root_squash,no_subtree_check)"
+
 - name: reload nfs service
   systemd:
     name: nfs-kernel-server
     state: reloaded
-  when: nfs_istalled.changed or shared_default_directory.changed or shared_home_directory.changed
-- name: allow connections from clients
-  ufw: 
-    rule: allow
-    port: '{{ nfs_port }}'
-    src: '{{ hostvars[item]["ansible_default_ipv4"].address }}'
-  with_items: '{{ groups["nfsclient"] }}'
-  register: ufw_updated
-- name: reload ufw service
-  systemd:
-    name: ufw
-    state: restarted
-    enabled: yes
-  when: ufw_updated.changed
+  when: nfs_installed is changed

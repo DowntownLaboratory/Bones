@@ -1,41 +1,14 @@
 ---
 - name: Create directory
   file:
-    path: /root/docker/ddns/
+    path: '/root/docker/ddns'
     state: directory
-  register: newdir
-- copy:
-    src: docker-compose.yaml
-    dest: /root/docker/ddns/docker-compose.yaml
-  when: newdir is changed
-- name: Add environment variables
+- name: Run docker-compose file
   block:
-    - name: Substitute api key
-      replace:
-          path:  /root/docker/ddns/docker-compose.yaml
-          regexp: '(ENV_API_KEY)'
-          replace: '{{ cloud_flare_api_key }}'
-    - name: Substitute domain name
-      replace:
-          path:  /root/docker/ddns/docker-compose.yaml
-          regexp: '(ENV_DOMAIN_NAME)'
-          replace: '{{ domain_name }}'
-    - name: Substitute faas subdomain
-      replace:
-          path:  /root/docker/ddns/docker-compose.yaml
-          regexp: '(ENV_FAAS_SUBDOMAIN)'
-          replace: '{{ faas_subdomain }}'
-    - name: Substitute blog subdomain
-      replace:
-          path:  /root/docker/ddns/docker-compose.yaml
-          regexp: '(ENV_BLOG_SUBDOMAIN)'
-          replace: '{{ blog_subdomain }}'
-    - name: Substitute info subdomain
-      replace:
-          path:  /root/docker/ddns/docker-compose.yaml
-          regexp: '(ENV_INFO_SUBDOMAIN)'
-          replace: '{{ info_subdomain }}'
-  when: newdir is changed
-- name: Run docker-compose file.
-  command: docker-compose -d -f /root/docker/ddns/docker-compose.yaml up --build
-  when: newdir is changed
+    - name: add docker-compose
+      template:
+        src: docker-compose.yaml.j2
+        dest: '/root/docker/ddns/docker-compose.yaml'
+        backup: yes
+    - name: run docker-compose
+      command: 'docker-compose -f "/root/docker/ddns/docker-compose.yaml" up -d --build'
