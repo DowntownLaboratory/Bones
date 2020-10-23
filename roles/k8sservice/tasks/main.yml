@@ -1,26 +1,26 @@
-# - name: Install Weave Works (Container Networking)
-#   shell: "kubectl apply -f \"https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')\""
-#   args:
-#     warn: false
-# - name: Install MetalLB (Load Balancing)
-#   block:
-#     - name: add metallb namespaces
-#       command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/namespace.yaml"
-#     - name: add metallb services
-#       command: 'kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/metallb.yaml'
-#     - name: add metallb secret
-#       command: "kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey='$(openssl rand -base64 128)'"
-#     - name: copy metallb config
-#       template: 
-#         src: metallb-config.yaml.j2
-#         dest: ./metallb-config.yaml
-#     - name: apply metallb config
-#       command: kubectl apply -f ./metallb-config.yaml
-#     - name: 'pause for {{ service_pause }} seconds(s)'
-#       pause:
-#         seconds: "{{ service_pause }}"
-# - name: Install Ingress-Nginx (Ingress Controller)
-#   command: arkade install ingress-nginx
+- name: Install Weave Works (Container Networking)
+  shell: "kubectl apply -f \"https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')\""
+  args:
+    warn: false
+- name: Install MetalLB (Load Balancing)
+  block:
+    - name: add metallb namespaces
+      command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/namespace.yaml"
+    - name: add metallb services
+      command: 'kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/metallb.yaml'
+    - name: add metallb secret
+      command: "kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey='$(openssl rand -base64 128)'"
+    - name: copy metallb config
+      template: 
+        src: metallb-config.yaml.j2
+        dest: ./metallb-config.yaml
+    - name: apply metallb config
+      command: kubectl apply -f ./metallb-config.yaml
+    - name: 'pause for {{ service_pause }} seconds(s)'
+      pause:
+        seconds: "{{ service_pause }}"
+- name: Install Ingress-Nginx (Ingress Controller)
+  command: arkade install ingress-nginx
 - name: Install Cert-Manager (TLS)
   block:
     - name: install cert manager package

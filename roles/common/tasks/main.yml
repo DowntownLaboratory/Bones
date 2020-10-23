@@ -21,7 +21,7 @@
 
 - name: 'check dependencies'
   apt:
-    name: ['python-apt', 'make', nfs-common]
+    name: ['python-apt', 'apt-transport-https', 'make', nfs-common]
     state: present
 
 - name: Reboot system

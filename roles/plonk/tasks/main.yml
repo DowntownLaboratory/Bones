@@ -8,9 +8,6 @@
       command: arkade get faas-cli
     - name: install openfaas
       command: arkade install openfaas
-    - name: service pause
-      pause:
-        seconds: "{{ service_pause }}"
     - name: expose openfaas
       command: arkade install openfaas-ingress --domain {{ faas_subdomain }}.{{ domain_name }} --email {{ domain_email }}
     - name: get password

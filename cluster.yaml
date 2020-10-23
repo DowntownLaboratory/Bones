@@ -7,26 +7,32 @@
       tags: [ setup, hardware ]
     - role: common
       tags: [ setup, shared ]
+
+- hosts: k8smanager:k8sassistant:k8sworker
+  become: true
+  roles:
     - role: docker
-      tags: [ setup, docker ]
+      tags: [ prereq, docker ]
     - role: kubernetes
-      tags: [ setup, kubernetes ]
+      tags: [ prereq, kubernetes ]
+
+
+# TODO: remove this when the real NAS server is online.
+# - hosts: nfsserver
+#   become: true
+#   roles:
+#     - role: ddns
+#       vars:
+#       tags: [ network ]
+#     - role: nfsserver
+#       vars:
+#       tags: [ storage ]
 
 - hosts: k8smanager:k8sassistant
   become: true
   roles:
     - role: proxy
       tags: [ network ]
-
-- hosts: nfsserver
-  become: true
-  roles:
-    - role: ddns
-      vars:
-      tags: [ network ]
-    - role: nfsserver
-      vars:
-      tags: [ storage ]
 
 # there should be one manager
 - hosts: k8smanager
@@ -56,4 +62,4 @@
       tags: [ kubernetes, service ]
     # P.L.O.N.K. (Prometheus, Linkerd2, OpenFaaS, NATS, Kuberentes)
     - role: plonk
-      tags: [ kubernetes, plonk ]
+      tags: [ kubernetes, service, plonk ]

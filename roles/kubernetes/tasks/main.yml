@@ -19,10 +19,11 @@
     name: ip6tables
     path: /usr/sbin/ip6tables-legacy
   failed_when: false
-- name: Install apt-transport-https
-  apt:
-    name: apt-transport-https
-    state: latest
+- name: Pass bridged IPv4 traffic to iptables' chains
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: '1'
+    state: present
 - name: Add Google Cloud Repo Key
   apt_key:
     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
