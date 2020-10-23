@@ -5,6 +5,8 @@
       tags: [ setup, os ]
     - role: raspberrypi
       tags: [ setup, hardware ]
+    - role: wireless
+      tags: [ setup, wireless ]
     - role: common
       tags: [ setup, shared ]
 

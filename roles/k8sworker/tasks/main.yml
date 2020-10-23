@@ -1,11 +1,11 @@
 # kubernetes_installed exists in the kubernetes role, 
 # TODO: isolate this file so that it does not use any external variables
 ---
-- name: Add Node
+- name: Add Worker Node
   block: 
-    - name: Reset Kubernetes
+    - name: 'reset kubeadm'
       shell: kubeadm reset -f
       register: kubeadm_reset
-    - name: Join Kubernetes Cluster
+    - name: 'join cluster'
       # the commands are registered as a variable for the k8s manager node.
       shell: "{{ hostvars[groups['k8smanager'][0]]['compute_plane_join_command'] }}" 

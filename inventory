@@ -1,8 +1,8 @@
 [raspberrypi]
-bone1 ansible_host=192.168.0.101
-bone2 ansible_host=192.168.0.102
-bone3 ansible_host=192.168.0.103
-bone4 ansible_host=192.168.0.104
+bone1 ansible_host=192.168.0.201
+bone2 ansible_host=192.168.0.202
+bone3 ansible_host=192.168.0.203
+bone4 ansible_host=192.168.0.204
 bone5 ansible_host=192.168.0.205
 
 [k8smanager]

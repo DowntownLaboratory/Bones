@@ -6,6 +6,9 @@
   block:
     - name: add metallb namespaces
       command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/namespace.yaml"
+    - name: 'pause for 10 second(s)'
+      pause:
+        seconds: 10
     - name: add metallb services
       command: 'kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/metallb.yaml'
     - name: add metallb secret
@@ -16,14 +19,14 @@
         dest: ./metallb-config.yaml
     - name: apply metallb config
       command: kubectl apply -f ./metallb-config.yaml
-    - name: 'pause for {{ service_pause }} seconds(s)'
+    - name: 'pause for {{ service_pause }} second(s)'
       pause:
         seconds: "{{ service_pause }}"
 - name: Install Ingress-Nginx (Ingress Controller)
   command: arkade install ingress-nginx
 - name: Install Cert-Manager (TLS)
   block:
-    - name: install cert manager package
+    - name: 'install cert manager'
       command: arkade install cert-manager
     - name: 'Pause for {{ service_pause }} second(s)'
       pause:
@@ -32,7 +35,7 @@
       template:
         src: lets-encrypt-issuer.yaml.j2
         dest: ./lets-encrypt-issuer.yaml
-    - name: create certificate-manager resources
+    - name: 'apply lets-encrypt-issuer.yaml'
       command: kubectl apply -f ./lets-encrypt-issuer.yaml
       # this service reports an error because it doesnt build quickly ennough
       # instead of ignoring errors we use a service pause to wait for cert-manager to be ready.

@@ -1,0 +1,16 @@
+- name: 'set promisc on for wlan0'
+  command: 'ip link set {{ network_interface }} promisc on'
+- name: 'copy promisc-on.service'
+  become: true
+  become_user: root
+  template:
+    src: promisc-on.service.j2
+    dest: /etc/systemd/system/promisc-on.service
+    backup: yes
+  register: copy_service
+- name: 'enable promisc-on.service'
+  systemd:
+    name: promisc-on.service
+    enabled: yes
+    daemon_reexec : yes
+  when: copy_service is changed
