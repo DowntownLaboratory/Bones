@@ -6,7 +6,7 @@
   block:
     - name: add metallb namespaces
       command: "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/manifests/namespace.yaml"
-    - name: 'pause for 10 second(s)'
+    - name: 'pause for 10 seconds'
       pause:
         seconds: 10
     - name: add metallb services

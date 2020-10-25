@@ -18,18 +18,6 @@
     - role: kubernetes
       tags: [ prereq, kubernetes ]
 
-
-# TODO: remove this when the real NAS server is online.
-# - hosts: nfsserver
-#   become: true
-#   roles:
-#     - role: ddns
-#       vars:
-#       tags: [ network ]
-#     - role: nfsserver
-#       vars:
-#       tags: [ storage ]
-
 - hosts: k8smanager:k8sassistant
   become: true
   roles:

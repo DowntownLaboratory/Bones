@@ -1,22 +1,17 @@
-# - name: install openfaas-cli
-#   block:
-#     - name: 'get openfaas-cli'
-#       command: curl -sSL https://cli.openfaas.com -o openfaascli.sh
-#     - name: 'install openfaas-cli'
-#       command: sh openfaascli.sh 
-- name: Install OpenFaaS (Functions)
-  block:
-    - name: 'install faas-cli'
-      command: arkade get faas-cli
-    - name: 'install openfaas'
-      command: arkade install openfaas
-    - name: 'expose openfaas'
-      command: arkade install openfaas-ingress --domain {{ faas_subdomain }}.{{ domain_name }} --email {{ domain_email }}
-    - name: 'get password'
-      shell: kubectl get secret -n openfaas basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode
-      register: openfaas_pass
-    - name: 'display password'
-      debug:
-        var: openfaas_pass.stdout
+- name: 'install faas-cli'
+  command: arkade get faas-cli
+- name: 'install openfaas'
+  command: arkade install openfaas
+- name: 'pause for {{ service_pause }} second(s)'
+  pause:
+    seconds: "{{ service_pause }}"
+- name: 'expose openfaas'
+  command: arkade install openfaas-ingress --domain {{ faas_subdomain }}.{{ domain_name }} --email {{ domain_email }}
+- name: 'get password'
+  shell: kubectl get secret -n openfaas basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode
+  register: openfaas_pass
+- name: 'display password'
+  debug:
+    var: openfaas_pass.stdout
 - name: 'intall cron connector'
   command: arkade install cron-connector
