@@ -1,0 +1,10 @@
+---
+- name: download iot packages
+  apt:
+    update_cache: yes
+    state: present
+    pkg: 
+      - python3-rpi.gpio
+      - i2c-tools
+      - libi2c-dev
+      - python3-smbus

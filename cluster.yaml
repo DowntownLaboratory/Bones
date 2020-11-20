@@ -9,14 +9,19 @@
       tags: [ setup, wireless ]
     - role: common
       tags: [ setup, shared ]
+    - role: docker
+      tags: [ setup, docker ]
+
+- hosts: iot
+  become: true
+  roles:
+    - role: gpio
 
 - hosts: k8smanager:k8sassistant:k8sworker
   become: true
   roles:
-    - role: docker
-      tags: [ prereq, docker ]
     - role: kubernetes
-      tags: [ prereq, kubernetes ]
+      tags: [ kubernetes ]
 
 - hosts: k8smanager:k8sassistant
   become: true
@@ -51,5 +56,5 @@
     - role: k8sservice
       tags: [ kubernetes, service ]
     # P.L.O.N.K. (Prometheus, Linkerd2, OpenFaaS, NATS, Kuberentes)
-    - role: plonk
-      tags: [ kubernetes, service, plonk ]
+    # - role: plonk
+    #   tags: [ kubernetes, service, plonk ]
