@@ -1,0 +1,20 @@
+
+- name: add mosquitto repo
+  apt-repository:
+    repo: 'ppa:mosquitto-dev/mosquitto-ppa'
+    state: present 
+    filename: mosquitto 
+    update_cache: yes
+    
+- name: 'install mosquitto'
+  apt:
+    name: ['mosquitto', 'mosquitto-clients']
+    state: present
+    update_cache: yes
+  register: mosquitto_installed
+
+- name: 'start service'
+  service:
+    name: mosquitto
+    state: restart
+  when: 'mosquitto_installed is changed'

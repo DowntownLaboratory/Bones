@@ -1,0 +1,14 @@
+MICROPYTHON_VERSION = {{ micropython_version }}
+
+dependencies:
+	apt update -y && apt upgrade -y
+	apt install make wget python python3-pip picocom -y
+	pip3 install esptool
+	wget -P $(PWD)/ http://micropython.org/resources/firmware/$(MICROPYTHON_VERSION).bin
+
+flash:
+	esptool.py --port /dev/ttyUSB0 erase_flash
+	esptool.py --port /dev/ttyUSB0 --baud 115200 write_flash --flash_size=detect 0  $(PWD)/$(MICROPYTHON_VERSION).bin
+
+connect:
+	picocom /dev/ttyUSB0 -b115200

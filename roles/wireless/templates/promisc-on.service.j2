@@ -1,5 +1,5 @@
 [Unit]
-Description=Enables promiscuous mode on start up which allows wlan devices to share metallb exposed services.
+Description="Enables promiscuous mode on start up which allows wlan devices to share metallb exposed services."
 
 [Service]
 ExecStartPre=/bin/sh -c 'until ping -c1 google.com; do sleep 5; done;'

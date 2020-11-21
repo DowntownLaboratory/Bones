@@ -16,6 +16,7 @@
   become: true
   roles:
     - role: gpio
+    - role: esp8266
 
 - hosts: k8smanager:k8sassistant:k8sworker
   become: true

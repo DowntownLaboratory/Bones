@@ -1,0 +1,10 @@
+---
+- name: create directory
+  file:
+    path: '~/micropython/'
+    state: directory
+- name: copy makefile
+  template:
+    src: Makefile.j2
+    dest: '~/micropython/Makefile'
+    backup: yes
