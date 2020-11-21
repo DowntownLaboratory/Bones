@@ -12,7 +12,7 @@ def main(server="localhost"):
     c = MQTTClient("umqtt_client", server)
     c.set_callback(sub_cb)
     c.connect()
-    c.subscribe(b"test")
+    c.subscribe(b"foo_topic")
     while True:
         if True:
             # Blocking wait for message

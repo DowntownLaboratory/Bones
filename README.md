@@ -49,25 +49,15 @@ ansible-playbook -i inventory cluster.yaml
 ``` bash
 ansible -m ping all
 ```
-5. Deploy: `ansible-playbook bones.yml`
+5. Deploy: `ansible-playbook cluster.yml`
 
-## Interacting with Jenkins
-you can find the admin password here: `/var/lib/jenkins/secrets/initialAdminPassword` you can interact with jenkins by visiting `<node_ip>:8080`. 
-
-## Interacting with Pi-Hole
-
-## Interacting with OwnCloud
-
-## Need to start over?
-1. Think about it.
-2. Reimage all your stuff.
-3. Rerun the scripts
-
-## Jenkins Notes
-1. Jenkins will need you to setup your global environments under manage jenkins => configure system => global properties => environment variables.
-2. Jenkins will also need additional docker plugins.
-3. Currently, we have to manually had new jenkins hosts.
-
+## working with Esp8266
+- The esp8266 role doesnt really work on esp8266, it'll create a raspberrypi with a viable enviornment with which to develop on esp8266s.
+- use the makefile commands to manipulate esp8266 projects.
+- prepare a connected esp8266 `make dependencies flash`
+- connect to serial port of esp8266 `make connect`
+- [web repl link here](http://micropython.org/webrepl/#192.168.0.146:8266/) * IP might be wrong.
+- find your webrepl daemon on the serial line after rebooting with control + d an esp8266
 ## References & Credits
 These playbooks were assembled using a handful of very helpful guides:
 * [ansible-rpi-pihole](https://github.com/gsemet/ansible-rpi-pihole) useful ansible techniques.
